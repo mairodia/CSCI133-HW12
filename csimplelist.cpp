@@ -14,12 +14,13 @@
 #include <algorithm>
 #include <cstdlib>
 using namespace std;
-#include "csimplelist.h"
+
 
 // == Copy Ctor ==========================================================
 //
 // =======================================================================
-CSimpleList::CSimpleList(const CSimpleList &other)
+template<typename ListType>
+CSimpleList<ListType>::CSimpleList(const CSimpleList &other)
 {
     m_items = NULL;
     m_numItems = m_currMax = 0;
@@ -35,7 +36,8 @@ CSimpleList::CSimpleList(const CSimpleList &other)
 // Output:
 //              void
 // =======================================================================
-void CSimpleList::DestroyList()
+template <typename ListType>
+void CSimpleList<ListType>::DestroyList()
 {
     m_currMax = 0;
     m_numItems = 0;
@@ -52,7 +54,8 @@ void CSimpleList::DestroyList()
 // Output:
 //              void
 // =======================================================================
-void CSimpleList::GetItem(int index, ListType &item) const
+template <typename ListType>
+void CSimpleList<ListType>::GetItem(int index, ListType &item) const
 {
     if(IsEmpty())
     {
@@ -76,19 +79,20 @@ void CSimpleList::GetItem(int index, ListType &item) const
 // Output:
 //              void
 // =======================================================================
-void CSimpleList::Insert(int index, const ListType &item)
+template <typename ListType>
+void CSimpleList<ListType>::Insert(int index, const ListType &item)
 {
     if(IsFull())
     {
         SetListSize(m_currMax + DEFAULT_NUM_ITEMS);
     }
-    if(index < 0) || (index > m_numItems))
+    if((index < 0) || (index > m_numItems))
     {
         throw CListEx(L_INVALID_INDEX);
     }
     if(index < m_numItems)
     {
-        MoveItems(index, MOVE_TO_BACK);
+        MoveItems(index, MOVE_TOWARDS_BACK);
     }
     m_items[index] = item;
     ++ m_numItems;
@@ -103,9 +107,10 @@ void CSimpleList::Insert(int index, const ListType &item)
 // Output:
 //              void
 // =======================================================================
-void CSimpleList::Remove(int index)
+template <typename ListType>
+void CSimpleList<ListType>::Remove(int index)
 {
-    if(isEmpty())
+    if(IsEmpty())
     {
         throw CListEx(L_EMPTY);
     }
@@ -115,7 +120,7 @@ void CSimpleList::Remove(int index)
     }
     if(index < (m_numItems -1))
     {
-        MoveItems(index, MOVE_TO_FRONT);
+        MoveItems(index, MOVE_TOWARDS_FRONT);
     }
     --m_numItems;
 } //end Remove
@@ -129,7 +134,8 @@ void CSimpleList::Remove(int index)
 // Output:
 //              void
 // =======================================================================
-void CSimpleList::SetListSize(int numItems)
+template <typename ListType>
+void CSimpleList<ListType>::SetListSize(int numItems)
 {
     m_currMax = numItems;
 } //end SetListSize
@@ -143,7 +149,8 @@ void CSimpleList::SetListSize(int numItems)
 // Output:
 //              index  -- number of items copied
 // =======================================================================
-int     CSimpleList::CopyList(const CSimpleList &other)
+template <typename ListType>
+int     CSimpleList<ListType>::CopyList(const CSimpleList &other)
 {
     int index;
     if(this != &other)
@@ -170,7 +177,8 @@ int     CSimpleList::CopyList(const CSimpleList &other)
 // Output:
 //              numItemsMoved -- the # of items moved
 // =======================================================================
-int CSimpleList::MoveItems(int index, int direction)
+template <typename ListType>
+int CSimpleList<ListType>::MoveItems(int index, int direction)
 {
     int destIndex;
     int update;
@@ -178,10 +186,10 @@ int CSimpleList::MoveItems(int index, int direction)
     int numItemsMoved = 0;
 
     //initialize the source and destination index values
-    if(MOVE_TO_BACK == direction)
+    if(MOVE_TOWARDS_BACK == direction)
     {
         sourceIndex = m_numItems - 1;
-        destIndex = m_numItemsl
+        destIndex = m_numItems;
         update = -1; // move from higher to lower addresses
     }
 
@@ -196,12 +204,12 @@ int CSimpleList::MoveItems(int index, int direction)
 
     do
     {
-        m_items[destIndex = m_items[sourceIndex];
+        m_items[destIndex] = m_items[sourceIndex];
         destIndex += update;
         sourceIndex += update;
         ++ numItemsMoved;
 
-        if(MOVE_TO_BACK == direction)
+        if(MOVE_TOWARDS_BACK == direction)
         {
             if((sourceIndex < index) || (destIndex < 1))
             {
@@ -210,9 +218,9 @@ int CSimpleList::MoveItems(int index, int direction)
         }
         else //MOVE_TO_FRONT
         {
-            if(sourceIndex >= m_numItems
+            if(sourceIndex >= m_numItems)
             {
-                bContinueLoop - false;
+                bContinueLoop = false;
             }
         }
     }while(true == bContinueLoop);
@@ -220,3 +228,31 @@ int CSimpleList::MoveItems(int index, int direction)
     return numItemsMoved;
 } //end MoveItems
 
+// == operator = overload ================================================
+//
+// =======================================================================
+template <typename ListType>
+CSimpleList<ListType>& CSimpleList<ListType>::operator=(const CSimpleList &rhs)
+{
+    m_currMax = rhs._currMax;
+    m_numItems = rhs.m_numItems;
+
+    for(int index = 0; index < m_numItems; index++)
+    {
+        m_items[index] = rhs.m_items[index];
+    }
+}
+
+// == operator [] overload ===============================================
+//
+// =======================================================================
+template <typename ListType>
+ListType& CSimpleList<ListType>::operator[](int index)
+{
+    if(index >= m_currMax)
+    {
+        cout << "Array index out of bound, exiting" << endl;
+        exit(0);
+    }
+    return m_items[index];
+}
