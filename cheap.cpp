@@ -64,30 +64,62 @@ void CHeap<HeapType>::Insert(const HeapType &item)
         }
     }
 
-    HeapType newEntry;
-    HeapType upperEntry;
-    int parent;
+//    cout << "The inserted item is " << insert << " at index " << index << endl;
+
+    HeapType parent;
+    HeapType temp;
 
     bool bContinueLoop = true;
 
     do
     {
-        parent = (index - 1)/2;
-        CSimpleList<HeapType>::GetItem(index, newEntry);
-        CSimpleList<HeapType>::GetItem(parent, upperEntry);
-
-        if(newEntry > upperEntry)
+        if(index == 0)
         {
-            swap(newEntry, upperEntry);
-            index = parent;
+            bContinueLoop = false;
+            break;
         }
+
+        CSimpleList<HeapType>::GetItem(index, insert);
+        CSimpleList<HeapType>::GetItem(index - 1, parent);
+
+        if(insert > parent)
+        {
+            temp = insert;
+            insert = parent;
+            parent = temp;
+
+            try
+            {
+                CSimpleList<HeapType>::Insert(index, insert);
+                CSimpleList<HeapType>::Insert(index - 1, parent);
+            }
+
+            catch(const CListEx &listEx)
+            {
+                switch(listEx.GetExType())
+                {
+                    case L_EMPTY:
+                        throw CHeapEx(H_EMPTY);
+                        break;
+                    case L_INVALID_INDEX:
+                        throw CHeapEx(H_ERROR);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            index --;
+
+        }
+
         else
         {
-            bContinueLoop == false;
+            bContinueLoop = false;
         }
     }while(bContinueLoop == true);
 
 } // end of Insert
+
 
 // == PeekTop ===========================================================================
 // Allows the user to see the root of the tree.
@@ -119,20 +151,19 @@ void CHeap<HeapType>::Remove(HeapType &item)
     int numItems = CSimpleList<HeapType>::GetNumItems();
     int index = 0;
 
+//    cout << "Item to be removed is " << item << endl;
+
     HeapType object;
     bool bContinueLoop = true;
 
-    for(; index < numItems || bContinueLoop == false; index++)
+    for(; index < numItems && bContinueLoop == true; index++)
     {
         CSimpleList<HeapType>::GetItem(index, object);
+//        cout << "Object is " << object << endl;
         if(object == item)
         {
             bContinueLoop = false;
         }
-    }
-    if(bContinueLoop == true)
-    {
-        throw CHeapEx(H_ERROR);
     }
 
     try
@@ -158,6 +189,7 @@ void CHeap<HeapType>::Remove(HeapType &item)
 
 } // end of Remove
 
+
 // == RebuildHeap =======================================================================
 // Rebuilds the tree after an item is removed.
 //
@@ -178,8 +210,13 @@ void CHeap<HeapType>::RebuildHeap(int rootIndex)
     CSimpleList<HeapType>::GetItem(index, last);
     CSimpleList<HeapType>::GetItem(rootIndex, root);
 
-    swap(root, last);
-    Remove(last);
+    //swap
+    HeapType temp;
+    temp = index;
+    index = root;
+    root = temp;
+
+    CSimpleList<HeapType>::Remove(index);
     index = rootIndex;
 
     int left, right;
@@ -223,4 +260,3 @@ void CHeap<HeapType>::RebuildHeap(int rootIndex)
         }
     }while(bContinueLoop == true);
 } // end of RebuildHeap
-
